@@ -1,20 +1,20 @@
-import jwt from "jsonwebtoken";
-import { User } from "../users/UsersService";
+import jwt from "jsonwebtoken"
+import { User } from "../users/UsersService"
 
 class AuthenticationService {
   checkAuth(authHeader: string | undefined) {
-    if (!authHeader) return;
+    if (!authHeader) return
 
-    const token = authHeader.split("Bearer")[1].trim();
+    const token = authHeader.split("Bearer")[1].trim()
 
     try {
-      const user = jwt.verify(token, "the_secret_key") as User;
+      const user = jwt.verify(token, "the_secret_key") as User
 
-      return user;
+      return user
     } catch (error) {
-      return;
+      return
     }
   }
 }
 
-export default AuthenticationService;
+export default AuthenticationService

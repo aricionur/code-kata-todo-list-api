@@ -20,22 +20,27 @@ class UserService {
     if (this.users.find(({ email }) => email === user.email))
       throw new Error(`The given email [${user.email}] does already exist!`)
 
-    const newUser = { ...user } as User
-    newUser.id = nextId++
+    const { password: rawPassword, email, username } = user
+    const id = nextId++
+    const token = jwt.sign({ id, email, username }, "the_secret_key", {
+      expiresIn: 3600,
+    })
+    const password = await bcryptjs.hash(rawPassword, 10)
 
-    newUser.password = await bcryptjs.hash(user.password, 10)
+    const newuser: User = { id, token, email, username, password }
 
-    newUser.token = jwt.sign(user, "the_secret_key", { expiresIn: 30 })
+    this.users.push(newuser)
 
-    this.users.push(newUser)
+    const userWithoutPass: Partial<User> = newuser
+    delete userWithoutPass.password
 
-    // pretend the server wait
+    // mock the server wait
     return new Promise((resolve) => {
-      setTimeout(() => resolve(newUser), 1000)
+      setTimeout(() => resolve(userWithoutPass), 1000)
     })
   }
 
-  async login(input: Pick<User, "email" | "password">) {
+  async login(input: Pick<User, "email" | "password">): Promise<User | null> {
     const { email, password } = input
 
     const user = this.users.find((user) => user.email === email)
@@ -43,12 +48,12 @@ class UserService {
 
     if (await bcryptjs.compare(password, user.password)) {
       user.token = jwt.sign(
-        { id: user.id, email: user.email },
+        { id: user.id, email: user.email, username: user.username },
         "the_secret_key",
         { expiresIn: "2h" }
       )
 
-      // pretend the server wait
+      // mock the server wait
       return new Promise((resolve) => {
         setTimeout(() => resolve(user), 1000)
       })
